@@ -1,0 +1,20 @@
+#Tạo một cái dạy gồm có nhiều fitness score
+#a dãy fitness score
+#Cộng dồn lại a[1]=a[0]+a[1] => Mảng để random thôi
+
+#=>0...a[0]..p[1]..a[1]..p[2]...a[2]....p[3]....a[3]
+#xác suất rơi vào trường a[1] -> a[2] = p[2]
+
+a[0]...p[0]..........a[1]..p[1].a[2]
+
+# phần tử: fitness, 0.1 0.2 0.4 0.2 0.1    population[n].fitness
+                   0  0.1 0.3 0.7 0.9     a[n]   a[i] > delta  0.7            =>[0---0.1] a[0]
+                                                    ax[i] - a[i-1] > delta => population[i] fitness cao 
+random.choice[Individual.fitness > delta]
+
+# mate: => 0 0.1 a[0]
+
+(#)                 0
+(#)             ##|#|#                1^2+2 =3      
+##################| |##############
+        alpha
