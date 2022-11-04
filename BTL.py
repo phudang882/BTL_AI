@@ -241,7 +241,6 @@ class Individual(object):
     '''
     def __init__(self, chromosome):
         self.chromosome = chromosome
-        self.fitness_score = 2
 
         
     def mate(self, par2):
@@ -276,9 +275,10 @@ class Individual(object):
         # generated chromosome for offspring
         prob = random.random()
         child_chromosome = self.chromosome[:c] + par2.chromosome[c:] 
-        if prob < 0.06:
-            c = random.randrange(1,len(self.chromosome))
-            child_chromosome = child_chromosome[:c-1] + random.choice("0123") + child_chromosome[c:]
+        if prob < 0.7:
+            c = random.randrange(1,len(child_chromosome))
+            child_chromosome = child_chromosome[:(c-1)] + [self.mutated_genes()] + child_chromosome[c:] 
+        
         return Individual(child_chromosome)
 
 
@@ -298,14 +298,18 @@ class GeneticAlgorithm(Solution):
             if self.is_failed(block):
                 break
             if self.is_goal(block):
-                return -1
+                return 3
         
         hole = Point(4,7) # 
-        fitness = 1/max(hole.distance_to(block.fst_point), hole.distance_to(block.snd_point))
+        f_distance = hole.distance_to(block.fst_point)
+        s_distance = hole.distance_to(block.fst_point)
+        if s_distance == 0:
+            s_distance = 2
+        fitness = 1/min(f_distance,s_distance)
 
         return fitness
             
-    def solve(self, src : Block, dst: Block,size_genetic = 100):
+    def solve(self, src : Block,size_genetic = 100):
         POPULATION_SIZE = size_genetic
 
         #current generation
@@ -319,7 +323,6 @@ class GeneticAlgorithm(Solution):
             gnome = Individual.create_gnome() # 1 individual
             population.append(Individual(gnome)) #population: list[Individual]
         
-        population_family = population
         while not found:
             '''
             population = [Indi]
@@ -342,23 +345,24 @@ class GeneticAlgorithm(Solution):
                 break
             '''
             # sort the population in increasing order of fitness score
-            population = sorted(population, key=lambda x: self.cal_fitness(x, copy.deepcopy(src)),reverse=True)
+            population = sorted(population, key=lambda x: self.cal_fitness(x))
             
             # if the individual having lowest fitness score ie.
             # 0 then we know that we have reached to the target
             # and break the loop
-            if self.cal_fitness(population[0], copy.deepcopy(src)) == 0:
+            print(self.cal_fitness(population[-1]))
+            if self.cal_fitness(population[-1]) == 3:
                 found = True
                 break
             # Otherwise generate new offsprings for new generation
-            new_generation = [] if POPULATION_SIZE%2 == 0 else [population[0]]
+            new_generation = [] if POPULATION_SIZE%2 == 0 else [population[-1],population[-2]]
             # new_generation.extend(population[s:]) # 
 
             # From 50% of fittest population, Individuals
             # will mate to produce offspring
             for _ in range(POPULATION_SIZE//2):
-                parent1 = random.choice(population[:POPULATION_SIZE//2])
-                parent2 = random.choice(population[:POPULATION_SIZE//2])
+                parent1 = random.choice(population[7*POPULATION_SIZE//10:])
+                parent2 = random.choice(population[7*POPULATION_SIZE//10:])
                 #parent1 mate parent2
 
                 child1 = parent1.mate(parent2)
@@ -370,24 +374,24 @@ class GeneticAlgorithm(Solution):
             population = new_generation
 
             print("Generation {}: {}".format(
-                generation, population[0].chromosome))
+                generation, population[-1].chromosome))
 
             generation += 1
-
+        b = ['L','R','U','D']
+        s = [b[int(i)] for i in population[-1].chromosome]
         print("Generation {}: {}".format(
-                generation, population[0].chromosome))
-
-        for gen in population[0].chromosome:
+                generation, s))
+        for gen in population[-1].chromosome:
             move_name = self.moves[int(gen)]
             # print(move_name, end="---\n")
             move = getattr(Block, move_name)
             move(src)
-            self.solution.append(src)
+            self.solution.append(copy.deepcopy(src))
         
         return True, self.solution
 
 import time
-MODE = MANUAL_MODE
+MODE = GA_MODE
 
 # init
 pygame.init()
