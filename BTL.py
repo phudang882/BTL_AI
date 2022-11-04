@@ -233,7 +233,7 @@ class Individual(object):
         '''
         create chromosome or string of genes
         '''
-        gnome_len = 100
+        gnome_len = 30
         return [self.mutated_genes() for _ in range(gnome_len)]
 
     '''
@@ -308,7 +308,12 @@ class GeneticAlgorithm(Solution):
         fitness = 1/min(f_distance,s_distance)
 
         return fitness
-            
+    def solve1(self, populations):
+        weight_selection = [self.cal_fitness(population) for population in populations]
+        for i in range(1,len(weight_selection)):
+            weight_selection[i] += weight_selection[i-1]
+        
+        pass
     def solve(self, src : Block,size_genetic = 100):
         POPULATION_SIZE = size_genetic
 
@@ -358,7 +363,7 @@ class GeneticAlgorithm(Solution):
             new_generation = [] if POPULATION_SIZE%2 == 0 else [population[-1],population[-2]]
             # new_generation.extend(population[s:]) # 
 
-            # From 50% of fittest population, Individuals
+            # From 70% of fittest population, Individuals
             # will mate to produce offspring
             for _ in range(POPULATION_SIZE//2):
                 parent1 = random.choice(population[7*POPULATION_SIZE//10:])

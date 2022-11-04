@@ -143,6 +143,6 @@ class GeneticAlgorithm(Solution):
             # print(move_name, end="---\n")
             move = getattr(Block, move_name)
             move(src)
-            self.solution.append(src)
+            self.solution.append(copy.deepcopy(src))
         
         return True, self.solution

@@ -9,7 +9,7 @@ from dfs import DepthFirstSearch
 from GeneticAlgorithm import GeneticAlgorithm
 
 # Set up MODE 
-MODE = C.MANUAL_MODE
+MODE = C.GA_MODE
 
 # init
 pygame.init()
