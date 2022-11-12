@@ -22,7 +22,7 @@ class Individual(object):
         '''
         create chromosome or string of genes
         '''
-        gnome_len = 100
+        gnome_len = 30
         return [self.mutated_genes() for _ in range(gnome_len)]
 
     '''
@@ -76,12 +76,13 @@ class GeneticAlgorithm(Solution):
             # print(move_name, end="---\n")
             move = getattr(Block, move_name)
             move(block)
-            if self.is_failed(block):
+            if self.is_failed(block): #
+                
                 break
             if self.is_goal(block):
                 return 0
         
-        hole = Point(4,7)
+        hole = Point(4,8)
         fitness = min(hole.distance_to(block.fst_point), hole.distance_to(block.snd_point))
         return fitness
 
@@ -130,8 +131,8 @@ class GeneticAlgorithm(Solution):
 
             population = new_generation
 
-            print("Generation {}: {}".format(
-                generation, population[0].chromosome))
+            print("Generation {}".format(
+                generation))
 
             generation += 1
 
@@ -145,4 +146,4 @@ class GeneticAlgorithm(Solution):
             move(src)
             self.solution.append(copy.deepcopy(src))
         
-        return True, self.solution
+        return generation, self.solution

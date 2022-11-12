@@ -38,8 +38,8 @@ block = Block(init_status, copy.copy(init_fst_point), copy.copy(init_snd_point))
 screen = pygame.display.set_mode((map.width * C.CELL_SIZE, map.height * C.CELL_SIZE))
 
 # DFS set up
-dfs = DepthFirstSearch(map)
-success, solution = dfs.solve(copy.deepcopy(block))
+# dfs = DepthFirstSearch(map)
+# success, solution = dfs.solve(copy.deepcopy(block))
 
 # GA set up
 ga = GeneticAlgorithm(map)

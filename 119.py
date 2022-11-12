@@ -294,6 +294,12 @@ class GeneticAlgorithm(Solution):
         # mh bé, mt bé, mh quan trọng hơn mt
         return fitness
     #dung lm wait
+    def solve1(self, populations):
+        weight_selection = 1
+        for i in range(1,len(weight_selection)):
+            weight_selection[i] += weight_selection[i-1]
+        
+        pass
     def select(self, weight):
         r = random.random()
         for i in range(len(weight)):
@@ -356,8 +362,6 @@ class GeneticAlgorithm(Solution):
             self.solution.append(copy.deepcopy(src))
         
         return True, self.solution
-
-
 import time
 MODE = GA_MODE
 
@@ -366,6 +370,7 @@ pygame.init()
 
 # set title
 pygame.display.set_caption("BLOXORZ")
+
 # state of the game
 state = state1
 

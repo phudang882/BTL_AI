@@ -29,7 +29,7 @@ class Map:
 
     def block_out_map(self, block):
         if not self.point_in_map(block.fst_point) or not self.point_in_map(block.snd_point):
-            print("Your Block Got Out The Map !!!")
+            # print("Your Block Got Out The Map !!!")
             return True
         return False
 
@@ -37,7 +37,7 @@ class Map:
         fst_point_fell = self.matrix[block.fst_point.y][block.fst_point.x] == 0
         snd_point_fell = self.matrix[block.snd_point.y][block.snd_point.x] == 0
         if fst_point_fell or snd_point_fell:
-            print("Your Block Fell !!!")
+            # print("Your Block Fell !!!")
             return True
         return False
 
