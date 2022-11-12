@@ -1,6 +1,7 @@
 import pygame
 import numpy as np
 import time
+import tracemalloc
 # Mode of the game 
 MANUAL_MODE = 0
 DFS_MODE = 1
@@ -157,20 +158,20 @@ class Start:
         self.init_point_2 = init_point_2
 
 
-# stateDemo = State(
-#     [
-#         [0, 0, 1, 1, 1, 0, 0, 0, 0, 0],
-#         [0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
-#         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-#         [0, 0, 1, 1, 2, 1, 1, 0, 0, 0],
-#         [1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
-#         [0, 0, 1, 1, 1, 0, 1, 1, 0, 0],
-#         [0, 0, 0, 1, 1, 0, 0, 1, 0, 0]
-#     ],
-#     Block.STANDING,
-#     Point(1, 2),
-#     Point(1, 2)
-# )
+stateDemo = Start(
+    [
+        [0, 0, 1, 1, 1, 0, 0, 0, 0, 0],
+        [0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [0, 0, 1, 1, 2, 1, 1, 0, 0, 0],
+        [1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+        [0, 0, 1, 1, 1, 0, 1, 1, 0, 0],
+        [0, 0, 0, 1, 1, 0, 0, 1, 0, 0]
+    ],
+    Block.STANDING,
+    Point(1, 2),
+    Point(1, 2)
+)
 state1 = Start(
     [
         [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -183,6 +184,19 @@ state1 = Start(
     Block.STANDING,
     Point(1,1),
     Point(1,1)
+)
+state2 = Start(
+    [
+        [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+        [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1],
+        [0, 0, 0, 0, 0, 1, 0, 1, 2, 1, 0],
+        [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0]
+    ],
+    Block.STANDING,
+    Point(0,0),
+    Point(1,0)
 )
 
 class Movement:
@@ -389,7 +403,7 @@ class GeneticAlgorithm(Movement):
         
         return True, self.solution
 
-MODE = GA_MODE
+MODE = DFS_MODE
 
 # init
 pygame.init()
@@ -414,6 +428,8 @@ block = Block(init_status, copy.copy(init_point_1), copy.copy(init_point_2))
 # create the screen
 screen = pygame.display.set_mode((map.width * SCALE_SIZE, map.height * SCALE_SIZE))
 
+start = time.time()
+tracemalloc.start()
 
 if MODE == GA_MODE:
 # GA set up
@@ -426,6 +442,11 @@ elif MODE != MANUAL_MODE:
     dfs = DepthFirstSearch(map)
     global solution2
     a, solution2 = dfs.solve(copy.deepcopy(block))
+    
+print(f'{tracemalloc.get_traced_memory()} bytes')
+
+print("Time: %s" % (time.time() - start))
+
 # start game
 i = 1
 running = True
@@ -457,14 +478,14 @@ while running:
             block.point_2 = copy.copy(init_point_2)
 
     if MODE == DFS_MODE:
-        if i < len(solution):
-            block = solution[i]
+        if i < len(solution2):
+            block = solution2[i]
             i += 1
         time.sleep(0.5)
 
     if MODE == GA_MODE:
-        if i < len(solution2):
-            block = solution2[i]
+        if i < len(solution1):
+            block = solution1[i]
             i += 1
         time.sleep(0.5)
 

@@ -25,9 +25,12 @@ print(start.status)
 print(start.init_point_1 == start.init_point_2)
 src = Block(start.status,start.init_point_1,start.init_point_2)
 print(start.mode[0])
+
 if start.mode == 'G':
+    
     solver = GeneticAlgorithm(map)
     _,solution = solver.solve(src=src)
+
 elif start.mode == 'D':
     solver = DFS(map)
     _,solution = solver.solve(src=src)
