@@ -1,13 +1,11 @@
 import pygame
 import numpy as np
-
-
+import time
 # Mode of the game 
 MANUAL_MODE = 0
 DFS_MODE = 1
 GA_MODE = 2
-FITNESS_DISTANCE_ZERO = 1e7
-CELL_SIZE = 64
+SCALE_SIZE = 64
 
 class Point:
 	def __init__(self, x, y):
@@ -16,97 +14,91 @@ class Point:
 
 	def distance_to(self, p):
 		return abs(p.x - self.x) + abs(p.y - self.y)
-
     
 	def __str__(self):
 		return str(self.x) + " " + str(self.y)
 
 class Block:
-
-    # status of block
-    LYING_HORIZONTALLY = 1
-    LYING_VERTICALLY = 2
+    LIE_HORIZON = 1
+    LIE_VERTICAL = 2
     STANDING = 3
 
-    # images are showed on screen
-    standing = pygame.image.load("imgs/block_standing.png")
-    lying = pygame.image.load("imgs/block_lying.png")
+    img_standing = pygame.image.load("imgs/block_standing.png")
+    img_lying = pygame.image.load("imgs/block_lying.png")
 
-    def __init__(self, status, fst_point, snd_point):
+    def __init__(self, status, point_1, point_2):
         self.status = status
-        self.fst_point = fst_point
-        self.snd_point = snd_point
+        self.point_1 = point_1
+        self.point_2 = point_2
 
-    def draw(self, screen):
+    def visualize(self, screen):
         if(self.status == Block.STANDING):
-            screen.blit(self.standing, (self.fst_point.x * CELL_SIZE, self.fst_point.y * CELL_SIZE))
+            screen.blit(self.img_standing, (self.point_1.x * SCALE_SIZE, self.point_1.y * SCALE_SIZE))
         else:
-            screen.blit(self.lying, (self.fst_point.x * CELL_SIZE, self.fst_point.y * CELL_SIZE))
-            screen.blit(self.lying, (self.snd_point.x * CELL_SIZE, self.snd_point.y * CELL_SIZE))
+            screen.blit(self.img_lying, (self.point_1.x * SCALE_SIZE, self.point_1.y * SCALE_SIZE))
+            screen.blit(self.img_lying, (self.point_2.x * SCALE_SIZE, self.point_2.y * SCALE_SIZE))
 
     def move_up(self):
         if self.status == Block.STANDING:
-            self.status = Block.LYING_VERTICALLY
-            self.fst_point.y -= 1
-            self.snd_point.y -= 2
-        elif self.status == Block.LYING_VERTICALLY:
+            self.status = Block.LIE_VERTICAL
+            self.point_1.y -= 1
+            self.point_2.y -= 2
+        elif self.status == Block.LIE_VERTICAL:
             self.status = Block.STANDING
-            self.fst_point.y -= 2
-            self.snd_point.y -= 1
-        elif self.status == Block.LYING_HORIZONTALLY:
-            self.fst_point.y -= 1
-            self.snd_point.y -= 1
+            self.point_1.y -= 2
+            self.point_2.y -= 1
+        elif self.status == Block.LIE_HORIZON:
+            self.point_1.y -= 1
+            self.point_2.y -= 1
 
     def move_down(self):
         if self.status == Block.STANDING:
-            self.status = Block.LYING_VERTICALLY
-            self.fst_point.y += 2
-            self.snd_point.y += 1
-        elif self.status == Block.LYING_VERTICALLY:
+            self.status = Block.LIE_VERTICAL
+            self.point_1.y += 2
+            self.point_2.y += 1
+        elif self.status == Block.LIE_VERTICAL:
             self.status = Block.STANDING
-            self.fst_point.y += 1
-            self.snd_point.y += 2
-        elif self.status == Block.LYING_HORIZONTALLY:
-            self.fst_point.y += 1
-            self.snd_point.y += 1
+            self.point_1.y += 1
+            self.point_2.y += 2
+        elif self.status == Block.LIE_HORIZON:
+            self.point_1.y += 1
+            self.point_2.y += 1
 
     def move_right(self):
         if self.status == Block.STANDING:
-            self.status = Block.LYING_HORIZONTALLY
-            self.fst_point.x += 1
-            self.snd_point.x += 2
-        elif self.status == Block.LYING_VERTICALLY:
-            self.fst_point.x += 1
-            self.snd_point.x += 1
-        elif self.status == Block.LYING_HORIZONTALLY:
+            self.status = Block.LIE_HORIZON
+            self.point_1.x += 1
+            self.point_2.x += 2
+        elif self.status == Block.LIE_VERTICAL:
+            self.point_1.x += 1
+            self.point_2.x += 1
+        elif self.status == Block.LIE_HORIZON:
             self.status = Block.STANDING
-            self.fst_point.x += 2
-            self.snd_point.x += 1
+            self.point_1.x += 2
+            self.point_2.x += 1
 
     def move_left(self):
         if self.status == Block.STANDING:
-            self.status = Block.LYING_HORIZONTALLY
-            self.fst_point.x -= 2
-            self.snd_point.x -= 1
-        elif self.status == Block.LYING_VERTICALLY:
-            self.fst_point.x -= 1
-            self.snd_point.x -= 1
-        elif self.status == Block.LYING_HORIZONTALLY:
+            self.status = Block.LIE_HORIZON
+            self.point_1.x -= 2
+            self.point_2.x -= 1
+        elif self.status == Block.LIE_VERTICAL:
+            self.point_1.x -= 1
+            self.point_2.x -= 1
+        elif self.status == Block.LIE_HORIZON:
             self.status = Block.STANDING
-            self.fst_point.x -= 1
-            self.snd_point.x -= 2
+            self.point_1.x -= 1
+            self.point_2.x -= 2
     def not_move(self):
         pass
     def encode(self):
         return (str(self))
-    
     def __str__(self):
-        return  str(self.status) + " " + str(self.fst_point) 
+        return  str(self.status) + " " + str(self.point_1) 
 
 class Map:
-
-    def __init__(self, cell, hole, matrix):
-        self.cell = cell
+    def __init__(self, background, hole, matrix):
+        self.background = background
         self.hole = hole
         self.matrix = matrix
         self.height = len(matrix)
@@ -119,67 +111,67 @@ class Map:
                 if self.matrix[i][j] == 2:
                     self.goal = Point(i,j)
         
-    def draw(self, screen):
+    def visualize(self, screen):
         pnt = Point(0, 0)
         for i in self.matrix:
             for j in i:
                 if j == 1:
-                    screen.blit(self.cell, (pnt.x * CELL_SIZE, pnt.y * CELL_SIZE))
+                    screen.blit(self.background, (pnt.x * SCALE_SIZE, pnt.y * SCALE_SIZE))
                 elif j == 2:
-                    screen.blit(self.hole, (pnt.x * CELL_SIZE, pnt.y * CELL_SIZE))
+                    screen.blit(self.hole, (pnt.x * SCALE_SIZE, pnt.y * SCALE_SIZE))
                 pnt.x += 1
             pnt.x = 0    
             pnt.y += 1
     
-    def point_in_map(self, point):
+    def check_inside_map(self, point):
         return (0 <= point.x and point.x < self.width) and (0 <= point.y and point.y < self.height)
 
-    def block_out_map(self, block):
-        if not self.point_in_map(block.fst_point) or not self.point_in_map(block.snd_point):
+    def check_outof_map(self, block):
+        if not self.check_inside_map(block.point_1) or not self.check_inside_map(block.point_2):
             return True
         return False
 
-    def block_felt(self, block):
-        fst_point_fell = self.matrix[block.fst_point.y][block.fst_point.x] == 0
-        snd_point_fell = self.matrix[block.snd_point.y][block.snd_point.x] == 0
-        if fst_point_fell or snd_point_fell:
+    def check_outof_ground(self, block):
+        point_1_fell = self.matrix[block.point_1.y][block.point_1.x] == 0
+        point_2_fell = self.matrix[block.point_2.y][block.point_2.x] == 0
+        if point_1_fell or point_2_fell:
             return True
         return False
 
-    def won_the_game(self, block: Block):
-        won_the_game = self.matrix[block.fst_point.y][block.fst_point.x] == 2 and block.status == Block.STANDING
-        if won_the_game:
-            print("The Block go into hole!")
+    def check_win(self, block: Block):
+        check_win = self.matrix[block.point_1.y][block.point_1.x] == 2 and block.status == Block.STANDING
+        if check_win:
+            print("The Block go into hole !!!")
             return True
         return False
 
     def impact(self, block):
-        return self.block_out_map(block) or self.block_felt(block) or self.won_the_game(block)
+        return self.check_outof_map(block) or self.check_outof_ground(block) or self.check_win(block)
 
 
-class State:
-    def __init__(self, matrix, init_status, init_fst_point, init_snd_point):
+class Start:
+    def __init__(self, matrix, init_status, init_point_1, init_point_2):
         self.matrix = matrix
         self.init_status = init_status
-        self.init_fst_point = init_fst_point
-        self.init_snd_point = init_snd_point
+        self.init_point_1 = init_point_1
+        self.init_point_2 = init_point_2
 
 
-stateDemo = State(
-    [
-        [0, 0, 1, 1, 1, 0, 0, 0, 0, 0],
-        [0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        [0, 0, 1, 1, 2, 1, 1, 0, 0, 0],
-        [1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
-        [0, 0, 1, 1, 1, 0, 1, 1, 0, 0],
-        [0, 0, 0, 1, 1, 0, 0, 1, 0, 0]
-    ],
-    Block.STANDING,
-    Point(1, 2),
-    Point(1, 2)
-)
-state1 = State(
+# stateDemo = State(
+#     [
+#         [0, 0, 1, 1, 1, 0, 0, 0, 0, 0],
+#         [0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+#         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+#         [0, 0, 1, 1, 2, 1, 1, 0, 0, 0],
+#         [1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+#         [0, 0, 1, 1, 1, 0, 1, 1, 0, 0],
+#         [0, 0, 0, 1, 1, 0, 0, 1, 0, 0]
+#     ],
+#     Block.STANDING,
+#     Point(1, 2),
+#     Point(1, 2)
+# )
+state1 = Start(
     [
         [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
         [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
@@ -193,7 +185,7 @@ state1 = State(
     Point(1,1)
 )
 
-class Solution:
+class Movement:
 
     def __init__(self, map: Map) -> None:
         self.solution = []             # (%2)  
@@ -203,11 +195,11 @@ class Solution:
     def solve(self, src: Block):
         pass
 
-    def is_goal(self, block):
-        return self.map.won_the_game(block)
+    def move_to_goal(self, block):
+        return self.map.check_win(block)
 
-    def is_failed(self, block):
-        return self.map.block_out_map(block) or self.map.block_felt(block)
+    def move_out(self, block):
+        return self.map.check_outof_map(block) or self.map.check_outof_ground(block)
 
     @staticmethod
     def print_stack(st):
@@ -218,51 +210,90 @@ class Solution:
 import copy
 import random
 
-class Individual(object):
+class Individual():
     
-    GENS = "01234"
-    gen_len = 30
+    length_of_genes = 30
     @classmethod
-    def mutated_genes(self):
+    def random_1_gene(self):
         gene = random.choice("0123") 
         return gene
 
     @classmethod
-    def create_gnome(self,len = 100):
+    def create_1_gene(self,len = 100):
        
-        self.gen_len = len
-        return [self.mutated_genes() for _ in range(self.gen_len)]
+        self.length_of_genes = len
+        return [self.random_1_gene() for _ in range(self.length_of_genes)]
 
     def __init__(self, chromosome):
         self.chromosome = chromosome
         
-    def mate(self, par2, generation):
-
+    def cross_and_mutate(self, par2, generation):
         child_chromosome = []
-        
-
-        c = random.randint(0,self.gen_len) 
+    
+        c = random.randint(0,self.length_of_genes) 
 
         prob = random.random()
         child_chromosome = self.chromosome[:c] + par2.chromosome[c:] 
         mutation_prob = 0.8 if generation > 100 else 0.6 if generation > 50 else 0.4
         if prob < mutation_prob:
-            leng_muta = self.gen_len
+            leng_muta = self.length_of_genes
             a = random.randrange(0,leng_muta)
             for _ in range(a):
-                p = random.randrange(0,self.gen_len)
-                child_chromosome[p]= self.mutated_genes()
+                p = random.randrange(0,self.length_of_genes)
+                child_chromosome[p]= self.random_1_gene()
                 
         return Individual(child_chromosome)
 
+class DepthFirstSearch(Movement):
 
-class GeneticAlgorithm(Solution):
+    def __init__(self, map: Map) -> None:
+        super().__init__(map)
+        self.stack = []
+        self.path = dict()
+        self.visited = set()
+
+    def solve(self, src : Block) :
+        self.stack.append(src)
+        self.visited.add(src.encode())
+        while len(self.stack) > 0:
+            u = self.stack.pop()
+            if self.move_to_goal(u):
+                solution = []
+                while u is not None:
+                    solution += [u]
+                    if u.encode() in self.path:
+                        u = self.path[u.encode()]
+                    else:
+                        break
+                    
+                solution.reverse()
+                self.print_stack(solution)
+                return True, list(solution)
+
+            prev_state = copy.deepcopy(u)
+            
+            for move_name in self.moves:
+                print(move_name, end = "---\n")
+                move = getattr(Block, move_name)
+                move(u)
+                if not self.move_out(u):
+                    encode = u.encode()
+                    if encode not in self.visited:
+                        self.stack.append(u)
+                        self.path[encode] = prev_state
+                        self.visited.add(encode)
+                u = copy.deepcopy(prev_state)
+
+        return False, []
+
+class GeneticAlgorithm(Movement):
     
     def __init__(self, map: Map):
         super().__init__(map)
         self.roof = (self.map.width + self.map.height) * 3
         self.goal = map.goal
-    def cal_fitness(self, ind : Individual):
+    
+    def fitness_function(self, ind : Individual):
         block = copy.deepcopy(self.block)
         mt = 0
         
@@ -270,7 +301,7 @@ class GeneticAlgorithm(Solution):
             move_name = self.moves[int(gen)]
             move = getattr(Block, move_name)
             move(block)
-            if self.is_failed(block):
+            if self.move_out(block):
                 b = int(gen)
                 move_name = self.moves[b-b%2+(b+1)%2]
                 move = getattr(Block,move_name) # 012 (3 2)
@@ -279,17 +310,17 @@ class GeneticAlgorithm(Solution):
             else:
                 mt += (move_name != 'not_move')
 
-            if self.is_goal(block):
+            if self.move_to_goal(block):
                 ind.chromosome[(i+1):] = '4' * (len(ind.chromosome) - i)
                 return self.roof
         # ['' '' '' ] (roof sm(MH) sum(MT)) ['' '' '4...'] heuristic
-        # gen_len
-        f_distance = self.goal.distance_to(block.fst_point) # abs(x-x) + abs(y-y)
-        s_distance = self.goal.distance_to(block.snd_point)
-        if s_distance == 0 or f_distance == 0:
-            s_distance = f_distance = 2
+        # length_of_genes
+        point_1_to_goal = self.goal.distance_to(block.point_1) # abs(x-x) + abs(y-y)
+        point_2_to_goal = self.goal.distance_to(block.point_2)
+        if point_2_to_goal == 0 or point_1_to_goal == 0:
+            point_2_to_goal = point_1_to_goal = 2
             
-        mh = min(f_distance,s_distance) # # #
+        mh = min(point_1_to_goal,point_2_to_goal) # # #
         fitness = self.roof - mh - mt * 0.1 # mh large - càng xa - fitness càng thấp
         # mh bé, mt bé, mh quan trọng hơn mt
         return fitness
@@ -307,22 +338,26 @@ class GeneticAlgorithm(Solution):
         found = False
         population = []
         self.block = copy.deepcopy(src)
+        
         weight_select = [0]*POPULATION_SIZE # [0,0...]
         weight_select[0] = POPULATION_SIZE//10 #[10, 00000..]
+        
         for i in range(1,POPULATION_SIZE):
             weight_select[i]=weight_select[i-1] + POPULATION_SIZE//100 # [10, 11, 12,..., 110]
+        
         s = sum(weight_select)
         weight_select = np.array(weight_select)/s # freq
+        
         for i in range(1,POPULATION_SIZE):
             weight_select[i] += weight_select[i-1] # [freq, f + 1, f+(f+1),]
         
         for _ in range(POPULATION_SIZE): # ---
-            gnome = Individual.create_gnome(30) # 1 individual
+            gnome = Individual.create_1_gene(30) # 1 individual
             population.append(Individual(gnome)) #population: list[Individual]
 
         while not found:
-            population = sorted(population, key=lambda x: self.cal_fitness(x))
-            if self.cal_fitness(population[-1]) == self.roof:
+            population = sorted(population, key=lambda x: self.fitness_function(x))
+            if self.fitness_function(population[-1]) == self.roof:
                 found = True
                 break
             new_generation = population[-POPULATION_SIZE*10//100:]
@@ -330,25 +365,22 @@ class GeneticAlgorithm(Solution):
             b = ['L','R','U','D','NONE']
             s = [b[int(i)] for i in population[-1].chromosome]
             print("Generation {}: {}. Fitness: {}".format(
-                generation, s, self.cal_fitness(population[-1])))
+                generation, s, self.fitness_function(population[-1])))
             
             for _ in range(POPULATION_SIZE - POPULATION_SIZE*10//100):
                 parent1 = population[self.select(weight_select)]
                 parent2 = population[self.select(weight_select)]
-                #parent1 mate parent2
-                child = parent1.mate(parent2, generation)
+                #parent1 cross_and_mutate parent2
+                child = parent1.cross_and_mutate(parent2, generation)
                 new_generation.append(child)
 
             population = new_generation
-
-            
-
             generation += 1
         
         b = ['L','R','U','D','NONE']
         s = [b[int(i)] for i in population[-1].chromosome]
-        print("Generation {}: {}".format(
-                generation, s))
+        print("Generation {}: {}".format(generation, s))
+        
         for gen in population[-1].chromosome:
             move_name = self.moves[int(gen)]
             move = getattr(Block, move_name)
@@ -357,8 +389,6 @@ class GeneticAlgorithm(Solution):
         
         return True, self.solution
 
-
-import time
 MODE = GA_MODE
 
 # init
@@ -370,34 +400,40 @@ pygame.display.set_caption("BLOXORZ")
 state = state1
 
 # setting map
-cell_map = pygame.image.load("imgs/map.png")
+background_map = pygame.image.load("imgs/map.png")
 hole_map = pygame.image.load("imgs/hole.png")
 matrix = state.matrix
-map = Map(cell_map, hole_map, matrix)
+map = Map(background_map, hole_map, matrix)
 
 # setting block
 init_status = state.init_status
-init_fst_point = state.init_fst_point
-init_snd_point = state.init_snd_point
-block = Block(init_status, copy.copy(init_fst_point), copy.copy(init_snd_point))
+init_point_1 = state.init_point_1
+init_point_2 = state.init_point_2
+block = Block(init_status, copy.copy(init_point_1), copy.copy(init_point_2))
 
 # create the screen
-screen = pygame.display.set_mode((map.width * CELL_SIZE, map.height * CELL_SIZE))
+screen = pygame.display.set_mode((map.width * SCALE_SIZE, map.height * SCALE_SIZE))
 
 
-
+if MODE == GA_MODE:
 # GA set up
-ga = GeneticAlgorithm(map)
-_, solution2 = ga.solve(copy.deepcopy(block))
-
+    global ga
+    ga = GeneticAlgorithm(map)
+    global solution1
+    _, solution1 = ga.solve(copy.deepcopy(block))
+elif MODE != MANUAL_MODE:
+    global dfs
+    dfs = DepthFirstSearch(map)
+    global solution2
+    a, solution2 = dfs.solve(copy.deepcopy(block))
 # start game
 i = 1
 running = True
 while running:
     
     screen.fill((255, 255, 255))
-    map.draw(screen)
-    block.draw(screen)
+    map.visualize(screen)
+    block.visualize(screen)
     
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -417,14 +453,14 @@ while running:
     if MODE == MANUAL_MODE:
         if map.impact(block) == True:
             block.status = init_status
-            block.fst_point = copy.copy(init_fst_point)
-            block.snd_point = copy.copy(init_snd_point)
+            block.point_1 = copy.copy(init_point_1)
+            block.point_2 = copy.copy(init_point_2)
 
-    # if MODE == DFS_MODE:
-    #     if i < len(solution):
-    #         block = solution[i]
-    #         i += 1
-    #     time.sleep(0.5)
+    if MODE == DFS_MODE:
+        if i < len(solution):
+            block = solution[i]
+            i += 1
+        time.sleep(0.5)
 
     if MODE == GA_MODE:
         if i < len(solution2):

@@ -1,9 +1,6 @@
-from Solution import Solution
-from Block import Block
-from Map import Map
+from Movement import *
 import copy
-
-class DepthFirstSearch(Solution):
+class DFS(Movement):
 
     def __init__(self, map: Map) -> None:
         super().__init__(map)
@@ -16,7 +13,7 @@ class DepthFirstSearch(Solution):
         self.visited.add(src.encode())
         while len(self.stack) > 0:
             u = self.stack.pop()
-            if self.is_goal(u):
+            if self.move_to_goal(u):
                 solution = []
                 while u is not None:
                     solution += [u]
@@ -35,7 +32,7 @@ class DepthFirstSearch(Solution):
                 print(move_name, end = "---\n")
                 move = getattr(Block, move_name)
                 move(u)
-                if not self.is_failed(u):
+                if not self.move_out(u):
                     encode = u.encode()
                     if encode not in self.visited:
                         self.stack.append(u)
